@@ -12,6 +12,11 @@ app.get('/', async (req,res) => {
     res.render('home')
 })
 
+app.get('/stream', async (req,res) => {
+
+    res.render('stream')
+})
+
 
 app.listen(4000, ()=>{
     console.log('hello')
