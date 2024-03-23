@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Player</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-b2fmYefV4gFvKih3CUJ/g5iWzGYY81RZmP6BTzQ7rGw7ffgtz5GqwpnFMN/hV+mI" crossorigin="anonymous">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-b2fmYefV4gFvKih3CUJ/g5iWzGYY81RZmP6BTzQ7rGw7ffgtz5GqwpnFMN/hV+mI" crossorigin="anonymous"> -->
 </head>
 
 <body>
@@ -14,13 +14,10 @@
         <div class="row">
             <div class="col">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        Select Video
-                    </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="changeVideo('pepega')">Pepega</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeVideo('peepo')">Peepo</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeVideo('bbrabbit')">BBRabbit</a></li>
+                        <li><a class="dropdown-item" href="/stream/pepega" target="_blank">Pepega</a></li>
+                        <li><a class="dropdown-item" href="/stream/peepo" target="_blank">Peepo</a></li>
+                        <li><a class="dropdown-item" href="/stream/bbrabbit" target="_blank">BBRabbit</a></li>
                     </ul>
                 </div>
             </div>
@@ -29,14 +26,14 @@
         <div class="row mt-3">
             <div class="col">
                 <video id="videoPlayer" width="320" height="240" controls>
-                    <source id="videoSource" src="/video/pepega.mp4" type="video/mp4">
+                    <source id="videoSource" src="/video/bbrabbit.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5YS3MxNbQubdjjZf/jJIk9ij2r3s0eCxNQ6j70uKx7sTKCwF+txId8oZ5smmD3S" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5YS3MxNbQubdjjZf/jJIk9ij2r3s0eCxNQ6j70uKx7sTKCwF+txId8oZ5smmD3S" crossorigin="anonymous"></script> -->
 
     <script>
         function changeVideo(videoName) {

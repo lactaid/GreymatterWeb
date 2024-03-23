@@ -20,6 +20,14 @@ app.get('/stream', async (req,res) => {
     res.render('stream')
 })
 
+app.get('/stream/:videoName', (req, res) => {
+  const videoName = req.params.videoName;
+  // Assuming you have logic to determine the file path based on videoName
+  const filePath = path.join(__dirname, 'public', 'video', `${videoName}.mp4`);
+  // res.send(filePath);
+  res.sendFile(filePath);
+})
+
 
 var ips = os.networkInterfaces();
 Object
