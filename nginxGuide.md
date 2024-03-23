@@ -1,14 +1,24 @@
-1. sudo apt install nginx -y
+1. Instalar
 
-2. iniciar server: sudo /etc/init.d/nginx start
+```
+sudo apt install nginx -y
+```
 
-(Esto es solo para probar si funciona el sitio al acceder a la ip), puedes ver tu ip con el siguiente comando:
+2. iniciar server (opcional):
+
+```
+sudo /etc/init.d/nginx start
+```
+
+Esto es para probar si funciona el sitio al acceder a la ip, puedes ver tu ip con el siguiente comando:
 
 ```
 hostname -I
 ```
 
-3. modificar: /etc/nginx/sites-available :
+Acceder en el navegador a la direccion ip dada deberia mostrar el sitio default de nginx
+
+3. modificar la seccion location del documento /etc/nginx/sites-available/default con este codigo:
 
 ```
 	location / {
@@ -21,7 +31,10 @@ hostname -I
     }
 ```
 
-4. reiniciar nginx: sudo systemctl restart nginx
+4. reiniciar nginx:
+```
+sudo systemctl restart nginx
+```
 (si no se habia inicalizado, solo correr el comando de start)
 
 
