@@ -16,6 +16,8 @@ sudo /etc/init.d/nginx start
 hostname -I
 ```
 
+Acceder en el navegador a la direccion ip dada deberia mostrar el sitio default de nginx
+
 3. modificar /etc/nginx/sites-available/default :
 
 ```
