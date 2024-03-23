@@ -18,7 +18,7 @@ hostname -I
 
 Acceder en el navegador a la direccion ip dada deberia mostrar el sitio default de nginx
 
-3. modificar /etc/nginx/sites-available/default :
+3. modificar la seccion location del documento /etc/nginx/sites-available/default con este codigo:
 
 ```
 	location / {
