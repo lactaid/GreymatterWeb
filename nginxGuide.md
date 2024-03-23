@@ -4,7 +4,7 @@
 sudo apt install nginx -y
 ```
 
-4. iniciar server: sudo /etc/init.d/nginx start
+2. iniciar server: sudo /etc/init.d/nginx start
 
 (Esto es solo para probar si funciona el sitio al acceder a la ip), puedes ver tu ip con el siguiente comando:
 
