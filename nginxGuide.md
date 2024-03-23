@@ -25,7 +25,10 @@ hostname -I
     }
 ```
 
-4. reiniciar nginx: sudo systemctl restart nginx
+4. reiniciar nginx:
+```
+sudo systemctl restart nginx
+```
 (si no se habia inicalizado, solo correr el comando de start)
 
 
