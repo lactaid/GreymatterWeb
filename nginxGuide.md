@@ -10,7 +10,7 @@ sudo apt install nginx -y
 sudo /etc/init.d/nginx start
 ```
 
-(Esto es solo para probar si funciona el sitio al acceder a la ip), puedes ver tu ip con el siguiente comando:
+Esto es para probar si funciona el sitio al acceder a la ip, puedes ver tu ip con el siguiente comando:
 
 ```
 hostname -I
