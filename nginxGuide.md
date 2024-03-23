@@ -12,7 +12,7 @@ sudo apt install nginx -y
 hostname -I
 ```
 
-3. modificar /etc/nginx/sites-available :
+3. modificar /etc/nginx/sites-available/default :
 
 ```
 	location / {
