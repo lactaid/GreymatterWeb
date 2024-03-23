@@ -1,11 +1,11 @@
 body {
     height: 100vh;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-    url("/img/greymatter.png");
+    background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.5)),
+    url("/img/trainz.jpg");
     background-size: cover;
     background-position: center;
     text-shadow: 0 0.05rem 0.1rem rgba(0, 0, 0, 0.5);
-    box-shadow: inset 0 0 5rem rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 5rem rgba(0, 0, 0, 0.75);
 }
 .cover-container {
   max-width: 60vw;
@@ -14,7 +14,7 @@ body {
 .nav-link {
     padding: 0.25rem 0;
     font-weight: 700;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.65);
     margin-left: 1rem;
     border-bottom: 0.25rem solid transparent;
 }
@@ -37,3 +37,6 @@ body {
 
 
         
+.nav-link:visited{
+    color: inherit;
+  }

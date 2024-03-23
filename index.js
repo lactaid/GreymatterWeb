@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const path = require('path');
 var os = require('os');
+const fs = require('fs');
 
 const PORT = 4000;
 let ip = '0.0.0.0'; 
@@ -28,6 +29,18 @@ app.get('/stream/:videoName', (req, res) => {
   res.sendFile(filePath);
 })
 
+
+app.get('/about', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'files', 'dummy.pdf');
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error retrieving PDF file');
+    }
+    res.contentType('application/about');
+    res.send(data);
+  });
+});
 
 var ips = os.networkInterfaces();
 Object

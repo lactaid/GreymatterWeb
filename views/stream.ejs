@@ -5,45 +5,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Player</title>
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-b2fmYefV4gFvKih3CUJ/g5iWzGYY81RZmP6BTzQ7rGw7ffgtz5GqwpnFMN/hV+mI" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="/bootstrap/bstyle.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+
+
 </head>
 
-<body>
 
-    <div class="container mt-5">
-        <div class="row">
+<body class="d-flex text-center text-white bg-dark">
+
+    
+
+        <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+            <header class="mb-auto">
+                <div>
+                    <h3 class="float-md-start mb-0">Greymatter</h3>
+                    <nav class="nav nav-masthead justify-content-center float-md-end">
+                        <a class="nav-link" aria-current="page" href="/">Home</a>
+                        <a class="nav-link active" href="/stream">Stream</a>
+                        <a class="nav-link" href="">Email</a>
+                    </nav>
+                </div>
+            </header>
+            <main class="px-3">
+                
+                    <!-- Three columns for three videos -->
+        <div class="row mt-3">
             <div class="col">
-                <div class="btn-group">
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/stream/pepega" target="_blank">Pepega</a></li>
-                        <li><a class="dropdown-item" href="/stream/peepo" target="_blank">Peepo</a></li>
-                        <li><a class="dropdown-item" href="/stream/bbrabbit" target="_blank">BBRabbit</a></li>
-                    </ul>
+                <div class="card" style="width: 18rem;">
+                    <img src="/img/pepega.png" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Pepega</h5>
+                        <p class="card-text"> xQc Performs The Worst Round In CSGO History </p>
+                        <a href="/stream/pepega" class="btn btn-primary" target="_blank">Stream Pepega</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card" style="width: 18rem;">
+                    <img src="/img/peepo1.jpg" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Peepo</h5>
+                        <p class="card-text"> When your favorite streamer sees your post - Peepo Animation </p>
+                        <a href="/stream/peepo" class="btn btn-primary" target="_blank">Stream Peepo</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card" style="width: 18rem;">
+                    <img src="/img/peepo2.jpg" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Peepo part 2</h5>
+                        <p class="card-text"> Spending time without your favorite streamer - Peepo Animation </p>
+                        <a href="/stream/peepo2" class="btn btn-primary" target="_blank">Stream Peepo 2</a>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="row mt-3">
-            <div class="col">
-                <video id="videoPlayer" width="320" height="240" controls>
-                    <source id="videoSource" src="/video/bbrabbit.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
+            </main>
+    
+            <footer class="mt-auto text-white-50">
+                <p></p>
+            </footer>
+    
+    
         </div>
-    </div>
 
-    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5YS3MxNbQubdjjZf/jJIk9ij2r3s0eCxNQ6j70uKx7sTKCwF+txId8oZ5smmD3S" crossorigin="anonymous"></script> -->
 
-    <script>
-        function changeVideo(videoName) {
-            var videoSource = document.getElementById('videoSource');
-            videoSource.src = '/video/' + videoName + '.mp4';
-            var videoPlayer = document.getElementById('videoPlayer');
-            videoPlayer.load();
-            videoPlayer.play();
-        }
-    </script>
+
+
+    <script src="/bootstrap/bscript.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
+</script>
 
 </body>
 
