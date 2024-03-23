@@ -4,7 +4,7 @@
 sudo apt install nginx -y
 ```
 
-2. iniciar server:
+2. iniciar server (opcional):
 
 ```
 sudo /etc/init.d/nginx start
