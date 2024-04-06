@@ -1,11 +1,30 @@
 const express = require('express');
+const mysql = require('mysql2');
+const Chart = require('chart.js');
+
 const app = express();
 const path = require('path');
 var os = require('os');
 const fs = require('fs');
 
-const PORT = 4000;
+const PORT = 80;
 let ip = '0.0.0.0'; 
+
+// Define your MySQL connection
+const sqlconnection = mysql.createConnection({
+  host: 'localhost',
+  user: 'ReadUser',
+  password: 'Seeng',
+  database: 'oeee_visual'
+});
+// Connect to MySQL
+sqlconnection.connect((err) => {
+  if (err) {
+      console.error('Error connecting to MySQL:', err);
+      return;
+  }
+  console.log('Connected to MySQL');
+});
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -72,6 +91,58 @@ app.get('/about', (req, res) => {
   });
 });
 
+app.get('/production', async (req, res) => {
+  sqlconnection.query("SELECT production_time, produced FROM oeee_visual.production WHERE Machine_ID = 1 AND production_time >= curdate() ORDER BY production_time ASC LIMIT 100;", (error, results) => {
+      if (error) {
+          console.error('Error fetching data from MySQL:', error);
+          res.status(500).send('Error fetching data from MySQL');
+          return;
+      }
+
+      // Process data and render the chart
+      var xData = results.map(item => item.production_time);
+      var yData = results.map(item => item.produced);
+
+      const chartConfig = {
+          type: 'line',
+          data: {
+              labels: xData,
+              datasets: [{
+                  label: 'Production',
+                  data: yData,
+                  fill: false,
+                  borderColor: 'rgb(75, 192, 192)',
+                  tension: 0.1
+              }]
+          },
+          options: {
+              scales: {
+                  y: {
+                      beginAtZero: true
+                  }
+              }
+          }
+      };
+      res.render('production', {chartConfig});
+  });
+});
+
+app.get('/production/data', async (req, res) => {
+  sqlconnection.query("SELECT production_time, produced FROM oeee_visual.production WHERE Machine_ID = 1 AND production_time >= curdate() ORDER BY production_time ASC LIMIT 100;", (error, results) => {
+      if (error) {
+          console.error('Error fetching data from MySQL:', error);
+          res.status(500).json({ error: 'Error fetching data from MySQL' });
+          return;
+      }
+
+      // Procesa los datos y envía la respuesta como JSON
+      var xData = results.map(item => item.production_time);
+      var yData = results.map(item => item.produced);
+
+      res.json({ xData, yData });
+  });
+});
+
 var ips = os.networkInterfaces();
 Object
   .keys(ips)
@@ -90,4 +161,4 @@ Object
 app.listen(PORT, () => {
     console.log(`Server is running at http://${ip}:${PORT}`);
 });
-
+// app.listen(PORT, ip)
