@@ -9,8 +9,7 @@ SELECT
     AS Total_Inactive_Time
 FROM 
     oeee_visual.error_instance
-WHERE Machine_ID = 1
-AND Error_time >= curdate()
+WHERE Error_time >= curdate()
 AND Error_time < curdate() + INTERVAL 1 DAY)
 
 SELECT (TIMESTAMPDIFF(SECOND, '2024-04-05 10:00:00', NOW()) - Total_Inactive_Time ) / 
@@ -20,8 +19,7 @@ SELECT (TIMESTAMPDIFF(SECOND, '2024-04-05 10:00:00', NOW()) - Total_Inactive_Tim
 WITH R_PROD AS (
 SELECT SUM(produced) as Real_production
 FROM oeee_visual.production
-WHERE Machine_ID = 1
-AND production_time >= curdate()
+WHERE production_time >= curdate()
 AND production_time < curdate() + INTERVAL 1 DAY),
 
 T_FUNC AS (
@@ -30,8 +28,7 @@ SELECT
     AS Total_Inactive_Time
 FROM 
     oeee_visual.error_instance
-WHERE Machine_ID = 1
-AND Error_time >= curdate()
+WHERE Error_time >= curdate()
 AND Error_time < curdate() + INTERVAL 1 DAY),
 
 Speed AS (
@@ -61,8 +58,7 @@ SELECT
     ) AS MTTR
 FROM 
     oeee_visual.error_instance
-WHERE Machine_ID = 1
-AND Error_time >= curdate()
+WHERE Error_time >= curdate()
 AND Error_time < curdate() + INTERVAL 1 DAY;
 
 
@@ -79,8 +75,7 @@ FROM
     FROM 
         oeee_visual.error_instance
     WHERE 
-        Machine_ID = 1
-        AND Error_time >= CURDATE()
+        Error_time >= CURDATE()
         AND Error_time < CURDATE() + INTERVAL 1 DAY) AS ACTIVITY,
     (SELECT 
         COUNT(*) as total_errors
@@ -94,12 +89,14 @@ FROM
 /*Utilizacion de tecnicos MTU
 Nota: Asumimos que solo una persona trabaja */
 WITH WORKING AS (
-SELECT SUM(finished_time - asigned_time) as time_working
+SELECT coalesce(SUM(finished_time - asigned_time), 0) as time_working
 FROM oeee_visual.error_instance
 INNER JOIN
 	oeee_visual.repair on repair.ErrorInstance = error_instance.ID_ErrorInstance
 WHERE
-	finished_time IS NOT NULL),
+	finished_time IS NOT NULL
+	AND Error_time >= CURDATE()
+	AND Error_time < CURDATE() + INTERVAL 1 DAY),
     
 SHOULD_WORK AS (
 SELECT SUM(
@@ -115,7 +112,7 @@ WHERE Machine_ID = 1
 	AND Error_time >= curdate()
 	AND Error_time < curdate() + INTERVAL 1 DAY)
     
-SELECT time_working/error_happening as MTU FROM WORKING, SHOULD_WORK;
+SELECT time_working/error_happening FROM WORKING, SHOULD_WORK;
     
 /*Production of machines individually*/
 SELECT production_time, produced FROM oeee_visual.production 

@@ -1,60 +1,71 @@
 import schedule
 import time
-import mysql.connector
-from getpass import getpass
+import socket
+import threading
+import json
 from machine_class import Machine
 
-try:
-    oeee_db = mysql.connector.connect(
-        host="localhost",
-        database="oeee_visual",
-        user="root", #Preferably create user with only insert permission
-        password="" #Remember to change password
-    )
-    if oeee_db.is_connected():
-        cursor = oeee_db.cursor()
-        cursor.execute("select database();")
-        record = cursor.fetchone()
-        print("You're connected to database: ", record)
-except mysql.connector.Error as e:
-    oeee_db.close()
-    print("Error while connecting to MySQL", e)
-finally:
-    if 'oeee_db' in locals() and oeee_db.is_connected():
-        cursor.close()
-#Inicializar el La maquina
-my_machine = Machine(1, 5)
-flag = True
+SERVER_HOST = '127.0.0.1'
+SERVER_PORT = 4000
+
+Running = True
+pr = 0
+# Crea un socket TCP/IP
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Conecta el socket al servidor
+client_socket.connect((SERVER_HOST, SERVER_PORT))
+print("Conectado al servidor")
+
+# Creamos la máquina
+my_machine = Machine(3,2)
 
 def Shift():
-    production = my_machine.Work()
+    global client_socket, pr
 
+    #Producimos
+    pr += my_machine.Work()
+    production = [my_machine.ID, pr]
+
+    #Si la maquina tiene error
     if my_machine.hasError():
         error_id = my_machine.getFaultMode()
-        with oeee_db.cursor() as cursor:
-            cursor.execute(f"""INSERT INTO oeee_visual.error_instance (ID_Error, Error_time, Machine_ID) VALUES 
-	                        ({error_id}, NOW(), {my_machine.ID});""")
-            oeee_db.commit()
-        raise ValueError("Machine got an error")
-        
-    print("Machine just generated: ", production)
+        production.append(error_id)
+    
+    #Mandamos el arreglo como json
+    json_data = json.dumps(production)
 
-    with oeee_db.cursor() as cursor:
-        cursor.execute(f"""INSERT INTO oeee_visual.production (Machine_ID, production_time, produced) VALUES
-                ({my_machine.ID}, NOW(), {production});""")
-        oeee_db.commit()
+    print(f"Machine {my_machine.ID}, just generated", production)
+
+    # Envía el mensaje al servidor
+    client_socket.sendall(json_data.encode('utf-8'))
+
+    #Reviso de nuevo si tenemos un error, para terminar la conexion
+    if my_machine.hasError():
+        raise ValueError('Some error happened')
+
+    #Recibimos
+    response = client_socket.recv(1024)
+    hold = response.decode('utf-8')
+    
+    if hold == "1":
+        print('Holding production...', pr)
+    else:
+        pr = 0
 
 try:
-    schedule.every(10).seconds.do(Shift)
+    #Enviamos nuestro ID primero
+    client_socket.send(str(my_machine.ID).encode(('utf-8')))
 
-    while True:
+    schedule.every(5).seconds.do(Shift)
+    while Running:
         schedule.run_pending()
         time.sleep(1)
 except ValueError as e:
     print(e)
-except mysql.connector.Error as e:
-    print("Error while connecting to MySQL", e)
+except KeyboardInterrupt as k:
+    print('Forcecully closed connection')
 finally:
-    if 'oeee_db' in locals() and oeee_db.is_connected():
-        oeee_db.close()
-        print("MySQL connection is closed")
+    # Cierra la conexión con el servidor
+    client_socket.close()
+    print("Conexión cerrada")
