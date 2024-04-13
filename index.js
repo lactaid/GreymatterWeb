@@ -26,6 +26,8 @@ sqlconnection.connect((err) => {
   console.log('Connected to MySQL');
 });
 
+const directorio = 'public\\database\\metric_queries';
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, '/public')));
@@ -92,43 +94,14 @@ app.get('/about', (req, res) => {
 });
 
 app.get('/production', async (req, res) => {
-  sqlconnection.query("SELECT production_time, produced FROM oeee_visual.production WHERE Machine_ID = 1 AND production_time >= curdate() ORDER BY production_time ASC LIMIT 100;", (error, results) => {
-      if (error) {
-          console.error('Error fetching data from MySQL:', error);
-          res.status(500).send('Error fetching data from MySQL');
-          return;
-      }
-
-      // Process data and render the chart
-      var xData = results.map(item => item.production_time);
-      var yData = results.map(item => item.produced);
-
-      const chartConfig = {
-          type: 'line',
-          data: {
-              labels: xData,
-              datasets: [{
-                  label: 'Production',
-                  data: yData,
-                  fill: false,
-                  borderColor: 'rgb(75, 192, 192)',
-                  tension: 0.1
-              }]
-          },
-          options: {
-              scales: {
-                  y: {
-                      beginAtZero: true
-                  }
-              }
-          }
-      };
-      res.render('production', {chartConfig});
-  });
+      res.render('production');
 });
 
-app.get('/production/data', async (req, res) => {
-  sqlconnection.query("SELECT production_time, produced FROM oeee_visual.production WHERE Machine_ID = 1 AND production_time >= curdate() ORDER BY production_time ASC LIMIT 100;", (error, results) => {
+app.get('/production/data/:value', async (req, res) => {
+  const value = req.params.value;
+  const query = `SELECT production_time, produced FROM oeee_visual.production WHERE Machine_ID = '${value}' AND production_time >= curdate() ORDER BY production_time ASC LIMIT 100;`;
+
+  sqlconnection.query(query, (error, results) => {
       if (error) {
           console.error('Error fetching data from MySQL:', error);
           res.status(500).json({ error: 'Error fetching data from MySQL' });
@@ -143,6 +116,50 @@ app.get('/production/data', async (req, res) => {
   });
 });
 
+app.get('/production/machines', async (req, res) => {
+  sqlconnection.query("SELECT idMachine as ID, state as Estado FROM oeee_visual.machine;", (error, results) => {
+      if (error) {
+          console.error('Error fetching data from MySQL:', error);
+          res.status(500).json({ error: 'Error fetching data from MySQL' });
+          return;
+      }
+
+      // Procesa los datos y envía la respuesta como JSON
+      var machineid = results.map(item => item.ID);
+      var machinestate = results.map(item => item.Estado);
+
+      res.json({ machineid, machinestate });
+  });
+});
+
+
+app.get('/production/metrics', async (req, res) => {
+  try {
+    // Conseguimos todas los archivos sql
+    const archivos = await fs.promises.readdir(directorio);
+    // Definimos un espacio para guardar las metricas
+    var metrics = {};
+    // Por cada consulta
+    for (const archivo of archivos) {
+      // Definimos la ruta completa
+      const rutaCompleta = path.join(directorio, archivo);
+      // Leemos la consulta
+      const sqlScript = await fs.promises.readFile(rutaCompleta, 'utf8');
+      // La ejecutamos
+      const [results, fields] = await sqlconnection.promise().query(sqlScript);
+      // La añadimos a las metricas
+      let obj = results[0];
+      for (let key in obj) {
+        metrics[key] = obj[key];
+      }
+    }
+    // console.log(metrics)
+    res.json(metrics);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 var ips = os.networkInterfaces();
 Object
   .keys(ips)
@@ -161,4 +178,3 @@ Object
 app.listen(PORT, () => {
     console.log(`Server is running at http://${ip}:${PORT}`);
 });
-// app.listen(PORT, ip)

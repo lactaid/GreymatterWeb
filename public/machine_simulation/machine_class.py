@@ -30,11 +30,11 @@ class Machine:
     def Work(self):
         bullet = random.randint(0,100)
         print('The bullet is: ', bullet)
-        if(bullet > 99):
+        if(bullet > 98):
             self.stop()
             self.fault_mode = random.sample(self.possible_errors, 1)[0]
             print("Production stopped at machine", self.ID, "!")
-            return -1
+            return 0
         else:
             return self.newSocket()
     
