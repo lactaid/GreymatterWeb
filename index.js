@@ -1,20 +1,111 @@
 const express = require('express');
 const mysql = require('mysql2');
 const Chart = require('chart.js');
+const http = require('http');
 
 const app = express();
 const path = require('path');
 var os = require('os');
 const fs = require('fs');
 
+// Para consultas a la base de datos
+const socketIo = require('socket.io');
+const server = http.createServer(app);
+const io = socketIo(server);
+
 const PORT = 80;
-let ip = '0.0.0.0'; 
+let ip = '0.0.0.0';
+
+// 
+const connectedClients = new Map();
+io.on('connection', (socket) =>{
+
+  connectedClients.set(socket.id, {
+    machineid: 'global',
+  });
+
+  socket.on('message', (data) => {
+    let currentInfo = connectedClients.get(socket.id);
+    currentInfo.machineid = data;
+    connectedClients.set(socket.id, currentInfo)
+    emitDatabaseChange();
+  });
+  
+  socket.on('disconnect', () => {
+    // console.log('User disconnected');
+    connectedClients.delete(socket.id);
+  });
+});
+
+async function emitDatabaseChange() {
+  for (const [clientId, clientInfo] of connectedClients) {
+    try {
+      // Hacemos queries distintas para cada cliente
+      const customizedData = await fetchData(clientInfo.machineid);
+      const globalMetrics = await fetchMetrics();
+      console.log(globalMetrics);
+      // Se emite la información customizada a cada cliente
+      io.to(clientId).emit('database_change', customizedData);
+    } catch (error) {
+      console.error('Error emitting database change:', error);
+    }
+  }
+}
+
+async function fetchData(value) {
+  const production_query = `SELECT production_time, produced FROM oeee_visual.production WHERE Machine_ID = '${value}' 
+        AND production_time >= curdate() ORDER BY production_time ASC LIMIT 100;`;
+
+  const machine_query = "SELECT idMachine as ID, state as Estado FROM oeee_visual.machine;"
+
+  try {
+    // De momento voy a hacerlo uno por uno, después lo hago automatico
+    const [rows, fields] = await sqlconnection.promise().query(production_query);
+    const [mrows, mfields] = await sqlconnection.promise().query(machine_query);
+
+    const xData = rows.map(item => item.production_time);
+    const yData = rows.map(item => item.produced);
+    const machineid = mrows.map(item => item.ID);
+    const machinestate = mrows.map(item => item.Estado)
+
+    return { xData, yData, machineid, machinestate };
+  } catch (error) {
+    console.error('Error fetching data from MySQL:', error);
+    throw error;
+  }
+};
+
+async function fetchMetrics() {
+  try {
+    // Conseguimos todas los archivos sql
+    const archivos = await fs.promises.readdir(query_directory);
+    // Definimos un espacio para guardar las metricas
+    let metrics = {};
+    // Por cada consulta
+    for (const archivo of archivos) {
+      // Definimos la ruta completa
+      const rutaCompleta = path.join(query_directory, archivo);
+      // Leemos la consulta
+      const sqlScript = await fs.promises.readFile(rutaCompleta, 'utf8');
+      // La ejecutamos
+      const [results, fields] = await sqlconnection.promise().query(sqlScript);
+      // La añadimos a las metricas
+      let obj = results[0];
+      for (let key in obj) {
+        metrics[key] = obj[key];
+      }
+    }
+    return metrics;
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
 
 // Define your MySQL connection
 const sqlconnection = mysql.createConnection({
   host: 'localhost',
   user: 'ReadUser',
-  password: 'Seeng',
+  password: '',
   database: 'oeee_visual'
 });
 // Connect to MySQL
@@ -26,7 +117,7 @@ sqlconnection.connect((err) => {
   console.log('Connected to MySQL');
 });
 
-const directorio = 'public\\database\\metric_queries';
+const query_directory = 'public\\database\\metric_queries';
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -97,69 +188,6 @@ app.get('/production', async (req, res) => {
       res.render('production');
 });
 
-app.get('/production/data/:value', async (req, res) => {
-  const value = req.params.value;
-  const query = `SELECT production_time, produced FROM oeee_visual.production WHERE Machine_ID = '${value}' AND production_time >= curdate() ORDER BY production_time ASC LIMIT 100;`;
-
-  sqlconnection.query(query, (error, results) => {
-      if (error) {
-          console.error('Error fetching data from MySQL:', error);
-          res.status(500).json({ error: 'Error fetching data from MySQL' });
-          return;
-      }
-
-      // Procesa los datos y envía la respuesta como JSON
-      var xData = results.map(item => item.production_time);
-      var yData = results.map(item => item.produced);
-
-      res.json({ xData, yData });
-  });
-});
-
-app.get('/production/machines', async (req, res) => {
-  sqlconnection.query("SELECT idMachine as ID, state as Estado FROM oeee_visual.machine;", (error, results) => {
-      if (error) {
-          console.error('Error fetching data from MySQL:', error);
-          res.status(500).json({ error: 'Error fetching data from MySQL' });
-          return;
-      }
-
-      // Procesa los datos y envía la respuesta como JSON
-      var machineid = results.map(item => item.ID);
-      var machinestate = results.map(item => item.Estado);
-
-      res.json({ machineid, machinestate });
-  });
-});
-
-
-app.get('/production/metrics', async (req, res) => {
-  try {
-    // Conseguimos todas los archivos sql
-    const archivos = await fs.promises.readdir(directorio);
-    // Definimos un espacio para guardar las metricas
-    var metrics = {};
-    // Por cada consulta
-    for (const archivo of archivos) {
-      // Definimos la ruta completa
-      const rutaCompleta = path.join(directorio, archivo);
-      // Leemos la consulta
-      const sqlScript = await fs.promises.readFile(rutaCompleta, 'utf8');
-      // La ejecutamos
-      const [results, fields] = await sqlconnection.promise().query(sqlScript);
-      // La añadimos a las metricas
-      let obj = results[0];
-      for (let key in obj) {
-        metrics[key] = obj[key];
-      }
-    }
-    // console.log(metrics)
-    res.json(metrics);
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
 var ips = os.networkInterfaces();
 Object
   .keys(ips)
@@ -170,11 +198,8 @@ Object
       }) 
   });
 
-
-
   // From https://gist.github.com/nfort/a29404417452a06ed6e31b3032c7e42b
 
-
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running at http://${ip}:${PORT}`);
 });
