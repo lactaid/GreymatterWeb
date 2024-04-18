@@ -20,7 +20,7 @@
                 var button = document.getElementById('input');
 
                 button.addEventListener('click', function() {
-                    socket.emit('message', 'this is a placeholder');
+                    socket.emit('message', 'global');
                 });
 
                 socket.on('database_change', function(data) {

@@ -18,7 +18,7 @@ client_socket.connect((SERVER_HOST, SERVER_PORT))
 print("Conectado al servidor")
 
 # Creamos la máquina
-my_machine = Machine(3,2)
+my_machine = Machine(1,3)
 
 def Shift():
     global client_socket, pr

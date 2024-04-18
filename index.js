@@ -18,11 +18,19 @@ let ip = '0.0.0.0';
 
 // 
 const connectedClients = new Map();
+let intervalId;
+
 io.on('connection', (socket) =>{
 
   connectedClients.set(socket.id, {
     machineid: 'global',
   });
+  // Llamada inicial
+  emitDatabaseChange();
+
+  if (io.engine.clientsCount === 1) {
+    intervalId = setInterval(emitDatabaseChange, 5000);
+  }
 
   socket.on('message', (data) => {
     let currentInfo = connectedClients.get(socket.id);
@@ -32,18 +40,23 @@ io.on('connection', (socket) =>{
   });
   
   socket.on('disconnect', () => {
-    // console.log('User disconnected');
+    // Si el usuario se desconecta
+    if (io.engine.clientsCount === 0 && intervalId) {
+      clearInterval(intervalId);
+      intervalId = undefined;
+    }
     connectedClients.delete(socket.id);
   });
 });
 
 async function emitDatabaseChange() {
+  console.log('Emitting Database Change');
   for (const [clientId, clientInfo] of connectedClients) {
     try {
       // Hacemos queries distintas para cada cliente
       const customizedData = await fetchData(clientInfo.machineid);
       const globalMetrics = await fetchMetrics();
-      console.log(globalMetrics);
+
       // Se emite la información customizada a cada cliente
       io.to(clientId).emit('database_change', customizedData);
     } catch (error) {
@@ -104,7 +117,7 @@ async function fetchMetrics() {
 // Define your MySQL connection
 const sqlconnection = mysql.createConnection({
   host: 'localhost',
-  user: 'ReadUser',
+  user: '',
   password: '',
   database: 'oeee_visual'
 });
