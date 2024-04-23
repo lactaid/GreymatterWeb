@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>notifications</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="/bootstrap/bstyle.css" crossorigin="anonymous">
+
+</head>
+
+<body class="d-flex">
+
+    <div class="cover-container d-flex w-100 h-100 p-3 flex-column">
+        <header class="mb-auto mx-3">
+            <div>
+                <h3 class="float-md-start mb-0"><img src="/img/SmithsLogo.png" width="130">
+                </h3>
+                <nav class="nav nav-masthead justify-content-center float-md-end">
+                    <a class="nav-link active" aria-current="page" href="/">Home</a>
+                    <a class="nav-link" href="/production">Production</a>
+                    <a class="nav-link" href="/notifications">Notifications</a>
+                    <a class="nav-link" href="/repair">Repair</a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="container-fluid row mt-3">
+
+            <div class="col-2"></div>
+
+            <div class="retainer col-8">
+
+                <div class="card my-3 p-3 p-card">
+
+                    <div class="row" style="justify-content: center; text-align: center;">
+                        <div class="col-md-3" style="width: fit-content;">
+                            <h2 class="card-title mt-3">
+                                Assign Repair
+                            </h2>
+                        </div>
+                    </div>
+
+                    <hr style="padding: 1px; background-color: black; opacity: 1;">
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <form action="/assign/<%= errorInstanceId %>" method="POST">
+
+                                <div class="mb-3">
+                                    <label for="technicianId" class="form-label">Technician</label>
+                                    <select class="form-select" aria-label="Default select example" id="technicianId"
+                                        name="technicianId">
+                                        <% technicians.forEach(technician => { %>
+                                        <option value="<%= technician.idtechnician %>">
+                                            <%= technician.idtechnician %> - <%= technician.name %>
+                                            <%= technician.lastname %>
+                                        </option>
+                                        <% }); %>
+                                    </select>
+
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="details" class="form-label">Assignment
+                                        Details</label>
+                                    <textarea class="form-control" id="details" rows="5" cols="50">Machine <%= errorInstance.Machine_ID %>, , situated within Area <%= errorInstance.Place %> experienced a malfunction at <%= errorInstance.Error_time %>, denoting a <%= errorInstance.Faultmode %> Error.
+                                        &#10;Your assignment entails addressing this issue promptly.
+                                    </textarea>
+                                </div>
+
+
+
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
+
+
+</body>
+
+
+
+
+
+</html>

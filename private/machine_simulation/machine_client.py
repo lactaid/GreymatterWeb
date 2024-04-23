@@ -18,6 +18,7 @@ client_socket.connect((SERVER_HOST, SERVER_PORT))
 print("Conectado al servidor")
 
 # Creamos la máquina
+# ID, rate
 my_machine = Machine(1,3)
 
 def Shift():

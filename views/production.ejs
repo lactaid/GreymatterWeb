@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,89 +11,282 @@
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="/bootstrap/bstyle.css" crossorigin="anonymous">
 </head>
-<body>
-    <div class="container">
-        <h1>Something</h1>
-        <div class="row">
-            <button id="input">Test Button</button>
-            <script>
-                var socket = io();
-                var button = document.getElementById('input');
 
-                button.addEventListener('click', function() {
-                    socket.emit('message', 'global');
-                });
+<body class="d-flex">
 
-                socket.on('database_change', function(data) {
-                    updateMachineList(data);
-                    myChart.data.labels = data.xData;
-                    myChart.data.datasets[0].data = data.yData;
-                    myChart.update();
-                });
-            </script>
-            <div class="col-md-4">
-              <div id="machine-container" class="list-group">
-                  <script>
-                    function updateMachineList(data){
-                        const listGroupContainer = document.getElementById('machine-container');
-                        while (listGroupContainer.firstChild) {
-                            listGroupContainer.removeChild(listGroupContainer.firstChild);
-                        }
-                        for (let i = 0; i < data.machineid.length; i++) {
-                            const buttonElement = document.createElement('a');
-                            buttonElement.href = '#';
-                            buttonElement.className = 'list-group-item list-group-item-action';
-                            buttonElement.textContent = `Machine ${data.machineid[i]} - ${data.machinestate[i]}`;
-                            buttonElement.addEventListener('click', function(event) {
-                                socket.emit('message', data.machineid[i]);
-                            });
-                            listGroupContainer.appendChild(buttonElement);
-                            };
-                    };
-                  </script>
-              </div>
+    <div class="cover-container d-flex w-100 h-100 p-3 flex-column">
+        <header class="mb-auto mx-3">
+            <div>
+                <h3 class="float-md-start mb-0"><img src="/img/SmithsLogo.png" width="130">
+                </h3>
+                <nav class="nav nav-masthead justify-content-center float-md-end">
+                    <a class="nav-link active" aria-current="page" href="/">Home</a>
+                    <a class="nav-link" href="/production">Production</a>
+                    <a class="nav-link" href="/notifications">Notifications</a>
+                    <a class="nav-link" href="/repair">Repair</a>
+                </nav>
             </div>
-            <div class="col-md-8">
-                <canvas id="myChart" width="200" height="200"></canvas>
-                <script>
-                    var ctx = document.getElementById('myChart').getContext('2d');
-                    var chartConfig = {
-                        type: 'line',
-                        data: {
-                            labels: [],
-                            datasets: [{
-                                label: 'Production',
-                                data: [],
-                                fill: false,
-                                borderColor: 'rgb(75, 192, 192)',
-                                tension: 0
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                x: {
-                                    type: 'time',
-                                    time: {
-                                    unit: 'hour'
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true
+        </header>
+
+        <div class="container-fluid row mt-3">
+            <!-- <h1 class="fs-5 mt-2 mb-2">Machines on production:</h1> -->
+
+            <div class="col-md-4">
+                <div class="row">
+                    <button id="input" class="btn btn-dark btn-block mb-1">Global</button>
+                    <script>
+                        var socket = io();
+                        var button = document.getElementById('input');
+
+                        button.addEventListener('click', function () {
+                            socket.emit('message', 'global');
+                            //socket.emit('request_global_data', 'global');
+                            console.log('Global')
+                            toggleRowVisibility('last-row-global', true);
+                            toggleRowVisibility('last-row-machine', false);
+
+                        });
+
+                        socket.on('database_change', function (data) {
+                            updateMachineList(data);
+                            myChart.data.labels = data.xData;
+                            myChart.data.datasets[0].data = data.yData;
+                            myChart.update();
+                        });
+
+                        function updateGlobalData(metrics) {
+                            console.log(metrics)
+
+                            const variables = {
+                                availability: (1 - (metrics.Total_Inactive_Time / metrics.EWT)),
+                                performance: (metrics.Real_production / metrics.MPP),
+                                quality: (0.9 / metrics.Real_production),
+                                oee: ((1 - (metrics.Total_Inactive_Time / metrics.EWT)) * (metrics
+                                    .Real_production / metrics.MPP) * (0.9 / metrics.Real_production)),
+                                mttr: (metrics.Total_Inactive_Time / metrics.Number_of_errors),
+                                mtbf: ((metrics.EWT - metrics.Total_Inactive_Time) / metrics
+                                    .Number_of_errors),
+                                mtu: (metrics.MTU),
+                                n_errors: (metrics.Number_of_errors)
+                            };
+
+                            console.log(variables);
+
+                            for (const [variable, value] of Object.entries(variables)) {
+                                const idElement = document.getElementById(variable);
+                                if (idElement) {
+                                    idElement.textContent = `${variable.toUpperCase()}: ${value}`;
+                                } else {
+                                    console.error(`Element with id ${variable} not found`);
                                 }
                             }
-                        },
-                        plugins: {
-                            adapter: {
-                                date: {
-                                    locale: 'es', // Opcional: puedes configurar la localización
-                            },
-                            },
-                        },
-                    };
-                    var myChart = new Chart(ctx, chartConfig );
-                </script>
+                        }
+
+
+
+                        socket.on('global_metrics', function (globalMetrics) {
+                            // Manejar los datos globales recibidos, por ejemplo, actualizar una gráfica
+                            console.log('globalMetrics');
+                            updateGlobalData(globalMetrics)
+                        });
+                    </script>
+                </div>
+                <div class="row">
+                    <div id="machine-container" class="list-group overflow-auto"
+                        style="max-width: none; max-height: 400px;">
+                        <script>
+                            var id;
+
+                            // Function to update the ID card
+                            function updateData(id, state, production, productionTime) {
+                                const idElement = document.getElementById('id');
+                                idElement.textContent = `ID: ${id}`;
+                                const stateElement = document.getElementById('state');
+                                stateElement.textContent =
+                                    `Status: ${state}`;
+                                const productionElement = document.getElementById('production');
+                                productionElement.textContent =
+                                    `Production: ${production}`;
+                                const productionTimeElement = document.getElementById('productionTime');
+                                productionTimeElement.textContent =
+                                    `Production Time: ${productionTime}`;
+                            }
+
+                            function updateMachineList(data) {
+                                const listGroupContainer = document.getElementById('machine-container');
+                                while (listGroupContainer.firstChild) {
+                                    listGroupContainer.removeChild(listGroupContainer.firstChild);
+                                }
+                                for (let i = 0; i < data.machineid.length; i++) {
+
+                                    const buttonElement = document.createElement('a');
+                                    buttonElement.href = '#';
+                                    buttonElement.className = 'list-group-item list-group-item-action';
+                                    buttonElement.textContent =
+                                        `Machine ${data.machineid[i]} - ${data.machinestate[i]}`;
+                                    if (data.machinestate[i] === "Blocked") {
+                                        buttonElement.classList.add('text-danger');
+                                    }
+                                    buttonElement.addEventListener('click', function (event) {
+                                        socket.emit('message', data.machineid[i]);
+                                        console.log(data);
+                                        let id = data.machineid[i];
+                                        let state = data.machinestate[i];
+                                        let production = data.production[i];
+                                        let productionTime = data.productionTime[i];
+                                        toggleRowVisibility('last-row-global', false);
+                                        toggleRowVisibility('last-row-machine', true);
+                                        updateData(id, state, production, productionTime);
+                                    });
+                                    listGroupContainer.appendChild(buttonElement);
+                                };
+                                // Dummy buttons
+                                for (let j = 0; j <= 10; j++) {
+                                    const buttonElement = document.createElement('a');
+                                    buttonElement.href = '#';
+                                    buttonElement.className = 'list-group-item list-group-item-action';
+                                    buttonElement.textContent =
+                                        `Dummy Machine ${j} - Status`;
+                                    buttonElement.addEventListener('click', function (event) {
+                                        console.log('Dummy');
+                                    });
+                                    listGroupContainer.appendChild(buttonElement);
+                                };
+
+                            };
+                        </script>
+                    </div>
+                </div>
+
             </div>
-        </div>
-    </div>
+            <div class="col-8 mb-3">
+                <div class="row">
+                    <canvas id="myChart" width="800" height="300"></canvas>
+                    <script>
+                        var ctx = document.getElementById('myChart').getContext('2d');
+                        var chartConfig = {
+                            type: 'line',
+                            data: {
+                                labels: [],
+                                datasets: [{
+                                    label: 'Production',
+                                    data: [],
+                                    fill: false,
+                                    borderColor: 'rgb(15, 99, 255   )',
+                                    tension: 0
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    x: {
+                                        type: 'time',
+                                        time: {
+                                            unit: 'hour'
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            },
+                            plugins: {
+                                adapter: {
+                                    date: {
+                                        locale: 'es', // Opcional: puedes configurar la localización
+                                    },
+                                },
+                            },
+                        };
+                        var myChart = new Chart(ctx, chartConfig);
+                    </script>
+                </div>
+
+                <div class="row" id="last-row-global">
+                    <h1 class="fs-5">Metrics</h1>
+                    <div class="col-3">
+                        <div class="card" style="min-height: 165px;">
+                            <div class="card-body">
+                                <h5 class="fs-6" id="availability">Availability: </h5>
+                                <h5 class="fs-6" id="performance">Performance: </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="card" style="min-height: 165px;">
+                            <div class="card-body">
+                                <h5 class="fs-6" id="quality">Quality: </h5>
+                                <h5 class="fs-6" id="oee">OEE: </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="card" style="min-height: 165px;">
+                            <div class="card-body">
+                                <h5 class="fs-6" id="mttr">MTTR: </h5>
+                                <h5 class="fs-6" id="mtbf">MTBF: </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="card" style="min-height: 165px;">
+                            <div class="card-body">
+                                <h5 class="fs-6" id="mtu">MTU: </h5>
+                                <h5 class="fs-6" id="n_errors">Total Errors:</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row d-none" id="last-row-machine">
+                    <h1 class="fs-5">Metrics</h1>
+                    <div class="col-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="fs-6" id="id">ID:</h5>
+                                <h5 class="fs-6" id="state">Status: </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="fs-6" id="productionTime">Time working since last error: </h5>
+                                <h5 class="fs-6" id="production">Production: </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <!-- <div class="card">
+                            <div class="card-body">
+                                <h5 class="fs-6">Error Time: </h5>
+                                
+                            </div>
+                        </div> -->
+                    </div>
+
+
+                </div>
+
+
+                <script>
+                    function toggleRowVisibility(sectionId, show) {
+                        const section = document.getElementById(sectionId);
+                        if (show) {
+                            section.classList.remove('d-none');
+                            console.log(`Se ha activado la sección ${sectionId}`);
+                        } else {
+                            section.classList.add('d-none');
+                            console.log(`Se ha desactivado la sección ${sectionId}`);
+                        }
+                    }
+                </script>
+
+                <footer class=" mt-auto text-white-50">
+                    <p></p>
+                </footer>
+
+
 </body>
+
 </html>
