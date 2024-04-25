@@ -1,5 +1,5 @@
 WITH WORKING AS (
-SELECT coalesce(SUM(finished_time - asigned_time), 0) as time_working
+SELECT coalesce(SUM(TIMESTAMPDIFF(SECOND, Asigned_time, Finished_time)), 0) as time_working
 FROM oeee_visual.error_instance
 INNER JOIN
 	oeee_visual.repair on repair.ErrorInstance = error_instance.ID_ErrorInstance
@@ -18,8 +18,8 @@ SELECT SUM(
 FROM oeee_visual.error_instance
 LEFT JOIN
 	oeee_visual.repair on repair.ErrorInstance = error_instance.ID_ErrorInstance
-WHERE Machine_ID = 1
-	AND Error_time >= curdate()
+WHERE 
+	Error_time >= curdate()
 	AND Error_time < curdate() + INTERVAL 1 DAY)
     
 SELECT time_working/error_happening as MTU FROM WORKING, SHOULD_WORK;
