@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script>let currentSelection;</script>
     <link rel="stylesheet" href="/bootstrap/bstyle.css" crossorigin="anonymous">
 </head>
 
@@ -37,30 +38,29 @@
                     <script>
                         var socket = io();
                         var button = document.getElementById('input');
+                        
 
                         button.addEventListener('click', function () {
-                            socket.emit('message', 'global');
+                            currentSelection = 'global';
+                            socket.emit('message', currentSelection);
                             //socket.emit('request_global_data', 'global');
-                            console.log('Global')
                             toggleRowVisibility('last-row-global', true);
                             toggleRowVisibility('last-row-machine', false);
 
                         });
 
                         socket.on('database_change', function (data) {
-                            updateMachineList(data);
+                            updateMachineList(data.machineStats);
                             myChart.data.labels = data.xData;
                             myChart.data.datasets[0].data = data.yData;
                             myChart.update();
                         });
 
                         function updateGlobalData(metrics) {
-                            console.log(metrics)
-
                             const variables = {
                                 availability: (1 - (metrics.Total_Inactive_Time / metrics.EWT)),
                                 performance: (metrics.Real_production / metrics.MPP),
-                                quality: (0.9 / metrics.Real_production),
+                                quality: (200 / metrics.Real_production),
                                 oee: ((1 - (metrics.Total_Inactive_Time / metrics.EWT)) * (metrics
                                     .Real_production / metrics.MPP) * (0.9 / metrics.Real_production)),
                                 mttr: (metrics.Total_Inactive_Time / metrics.Number_of_errors),
@@ -82,11 +82,9 @@
                             }
                         }
 
-
-
                         socket.on('global_metrics', function (globalMetrics) {
                             // Manejar los datos globales recibidos, por ejemplo, actualizar una gráfica
-                            console.log('globalMetrics');
+                            // console.log('globalMetrics');
                             updateGlobalData(globalMetrics)
                         });
                     </script>
@@ -117,23 +115,31 @@
                                 while (listGroupContainer.firstChild) {
                                     listGroupContainer.removeChild(listGroupContainer.firstChild);
                                 }
-                                for (let i = 0; i < data.machineid.length; i++) {
+                                for (let i = 0; i < data.length; i++) {
 
                                     const buttonElement = document.createElement('a');
                                     buttonElement.href = '#';
                                     buttonElement.className = 'list-group-item list-group-item-action';
                                     buttonElement.textContent =
-                                        `Machine ${data.machineid[i]} - ${data.machinestate[i]}`;
-                                    if (data.machinestate[i] === "Blocked") {
+                                        `Machine ${data[i].machineid} - ${data[i].machinestate}`;
+                                    if (data[i].machinestate === "Blocked") {
                                         buttonElement.classList.add('text-danger');
                                     }
+                                    
+                                    let id = data[i].machineid;
+                                    let state = data[i].machinestate;
+                                    let production = data[i].machineproduction;
+                                    let productionTime = data[i].machineLE;
+
+                                    if (currentSelection === id) {
+                                        updateData(id, state, production, productionTime);
+                                    }
+                                    
                                     buttonElement.addEventListener('click', function (event) {
-                                        socket.emit('message', data.machineid[i]);
-                                        console.log(data);
-                                        let id = data.machineid[i];
-                                        let state = data.machinestate[i];
-                                        let production = data.production[i];
-                                        let productionTime = data.productionTime[i];
+                                        currentSelection = id
+                                        // console.log(currentSelection);
+                                        socket.emit('message', id);
+                                        
                                         toggleRowVisibility('last-row-global', false);
                                         toggleRowVisibility('last-row-machine', true);
                                         updateData(id, state, production, productionTime);

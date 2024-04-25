@@ -128,7 +128,23 @@ async function fetchData(value) {
       //console.log('global')
     }
 
-  const machine_query = "SELECT idMachine as ID, state as Estado FROM oeee_visual.machine;"
+  const machine_query = `SELECT 
+          machine.idMachine as ID, 
+          machine.state as Estado,
+          IFNULL(production.TotalProduction, 0) as TotalProduction,
+          TIMESTAMPDIFF(SECOND, MAX(error_instance.Error_time), NOW()) as LastError
+        FROM 
+          oeee_visual.machine
+        LEFT JOIN 
+          (
+              SELECT Machine_ID, SUM(produced) as TotalProduction
+              FROM oeee_visual.production
+              WHERE production_time BETWEEN CURDATE() AND CURDATE() + INTERVAL 1 DAY
+              GROUP BY Machine_ID
+          ) AS production ON machine.idMachine = production.Machine_ID
+        LEFT JOIN oeee_visual.error_instance ON machine.idMachine = error_instance.Machine_ID
+        AND Error_time BETWEEN CURDATE() AND CURDATE() + INTERVAL 1 DAY
+        GROUP BY machine.idMachine;`
 
   try {
     // De momento voy a hacerlo uno por uno, después lo hago automatico
@@ -138,18 +154,15 @@ async function fetchData(value) {
 
     const xData = await rows.map(item => item.production_time);
     const yData = await rows.map(item => item.Production);
-    const machineid = await mrows.map(item => item.ID);
-    const machinestate = await mrows.map(item => item.Estado)
-    const machineStats = await rows.map(row => ({
-      prTime: row.production_time,
-      pr: row.Production
-    })); 
-    const productionTime = await machineStats.map(item => item.prTime);
-    const production = await machineStats.map(item => item.pr);
+    const machineStats = await mrows.map(item => ({
+      machineid: item.ID,
+      machinestate: item.Estado,
+      machineproduction: item.TotalProduction,
+      machineLE: item.LastError
+    }));
   
-  
-    //console.log('Data fetched from MySQL:', xData, yData, machineid, machinestate, productionTime, production);
-    return { xData, yData, machineid, machinestate, productionTime, production};
+    // console.log('Data fetched from MySQL:', xData, yData, machineStats);
+    return { xData, yData, machineStats};
     
     
   } catch (error) {
@@ -303,9 +316,8 @@ app.post('/assign/:errorInstanceId', async (req, res) => {
   const assignmentDetails = req.body.assignmentDetails;
 
   // Crear una nueva instancia en la tabla 'repair'
-  const sqlInsertRepair = 'INSERT INTO repair (ErrorInstance, technician, Comment, Asigned_time) VALUES (?, ?, ?, ?)';
-  const currentTime = new Date().toISOString().slice(0, 19).replace('T', ' '); // Obtener la hora actual en formato MySQL
-  const values = [errorInstanceId, technicianId, assignmentDetails, currentTime];
+  const sqlInsertRepair = 'INSERT INTO repair (ErrorInstance, technician, Comment, Asigned_time) VALUES (?, ?, ?, NOW())';
+  const values = [errorInstanceId, technicianId, assignmentDetails];
 
   try {
       await sqlconnection.promise().query(sqlInsertRepair, values);
@@ -376,9 +388,8 @@ app.post('/register-repair/:errorInstanceId', async (req, res) => {
       const errorInstanceId = req.params.errorInstanceId;
       
   // Update the Finished_time column with the current timestamp
-  const currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const updateErrorInstanceQuery = 'UPDATE error_instance SET Finished_time = ? WHERE ID_ErrorInstance = ?';
-  await sqlconnection.promise().query(updateErrorInstanceQuery, [currentTime, errorInstanceId]);
+  const updateErrorInstanceQuery = 'UPDATE error_instance SET Finished_time = NOW() WHERE ID_ErrorInstance = ?';
+  await sqlconnection.promise().query(updateErrorInstanceQuery, [errorInstanceId]);
 
   // Update the state column of the corresponding machine to 'Operative'
   const updateMachineQuery = 'UPDATE machine SET state = "Operative" WHERE idMachine = (SELECT Machine_ID FROM error_instance WHERE ID_ErrorInstance = ?)';
