@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>notifications</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <link rel="stylesheet" href="/bootstrap/bstyle.css" crossorigin="anonymous">
 
 </head>
@@ -65,14 +66,14 @@
                                 <div class="mb-3">
                                     <label for="details" class="form-label">Assignment
                                         Details</label>
-                                    <textarea class="form-control" id="details" rows="5" cols="50">Machine <%= errorInstance.Machine_ID %>, , situated within Area <%= errorInstance.Place %> experienced a malfunction at <%= errorInstance.Error_time %>, denoting a <%= errorInstance.Faultmode %> Error.
+                                    <textarea class="form-control" id="details" rows="5" cols="50">Machine <%= errorInstance.Machine_ID %>, situated within Area <%= errorInstance.Place %> experienced a malfunction at <%= errorInstance.Error_time %>, denoting a <%= errorInstance.Faultmode %> Error.
                                         &#10;Your assignment entails addressing this issue promptly.
                                     </textarea>
                                 </div>
 
 
 
-                                <button type="submit" class="btn btn-primary">Submit</button>
+                                <button type="click" class="btn btn-primary" onclick="sendMail();">Submit</button>
                             </form>
                         </div>
                     </div>
@@ -82,6 +83,40 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
+    <script>
+
+        
+        function sendMail(){
+
+            var details = document.getElementById('details').value;
+            
+            var selectElement = document.getElementById('technicianId');
+            var selectedIndex = selectElement.selectedIndex;
+            var selectedOption = selectElement.options[selectedIndex];
+            var selectedText = selectedOption.text;
+            selectedText = selectedText.replace(/[\d-]/g, '');
+            
+            //Esto es lo que manda el correo, si queremos que se mande solo hay que descomentarlo
+            /*(function(){
+                emailjs.init("rCzXv1iJ74A3fvLfE"); //public key
+            })();
+
+            var params = {
+                to: 'booksmart.oficial@gmail.com',
+                subject: 'Machine error!',
+                message: 'Alert for '+ selectedText + '\n\n' + details
+            }
+
+            var serviceID = "service_nxmzfs9"
+            var templateID = "template_lfkq1mo"
+
+            emailjs.send(serviceID, templateID, params)
+            .then( res => {
+                alert("Email sent!")
+            })
+            .catch();*/
+        }
     </script>
 
 

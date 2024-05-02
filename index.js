@@ -203,7 +203,7 @@ async function fetchMetrics() {
 const sqlconnection = mysql.createConnection({
   host: 'localhost',
   user: process.env.SQL_USER, // Variables de entorno, definir en archivo .env, si no existe se debe crear en tu compu
-  password: process.env.SQL_PASSWORD, 
+  password: process.env.SQL_PASSWORD,
   database: 'oeee_visual'
 });
 // Connect to MySQL
