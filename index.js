@@ -1,7 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
 const Chart = require('chart.js');
-const http = require('http');
+const https = require('http'); //Change to https if using https
 
 const app = express();
 const path = require('path');
@@ -16,12 +16,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 
+// Load the SSL/TLS certificate and private key
+// const options = {
+//   key: fs.readFileSync(path.join(__dirname, 'key.pem')),
+//   cert: fs.readFileSync(path.join(__dirname, 'cert.pem'))
+// };
+
 // Para consultas a la base de datos
 const socketIo = require('socket.io');
-const server = http.createServer(app);
+const server = https.createServer(app);
 const io = socketIo(server);
 
-const PORT = 80;
+const PORT = 443;
 let ip = '0.0.0.0';
 
 // 
@@ -39,7 +45,7 @@ io.on('connection', (socket) =>{
   emitDatabaseChange();
 
   if (io.engine.clientsCount === 1) {
-    intervalId = setInterval(emitDatabaseChange, 5000);
+    intervalId = setInterval(emitDatabaseChange, 10000);
   }
 
   socket.on('message', (data) => {
@@ -128,29 +134,14 @@ async function fetchData(value) {
       //console.log('global')
     }
 
-  const machine_query = `SELECT 
-          machine.idMachine as ID, 
-          machine.state as Estado,
-          IFNULL(production.TotalProduction, 0) as TotalProduction,
-          TIMESTAMPDIFF(SECOND, MAX(error_instance.Error_time), NOW()) as LastError
-        FROM 
-          oeee_visual.machine
-        LEFT JOIN 
-          (
-              SELECT Machine_ID, SUM(produced) as TotalProduction
-              FROM oeee_visual.production
-              WHERE production_time BETWEEN CURDATE() AND CURDATE() + INTERVAL 1 DAY
-              GROUP BY Machine_ID
-          ) AS production ON machine.idMachine = production.Machine_ID
-        LEFT JOIN oeee_visual.error_instance ON machine.idMachine = error_instance.Machine_ID
-        AND Error_time BETWEEN CURDATE() AND CURDATE() + INTERVAL 1 DAY
-        GROUP BY machine.idMachine;`
+  const machine_query = await fs.promises.readFile('private\\database\\machine_query.sql', 'utf8');
 
   try {
     // De momento voy a hacerlo uno por uno, después lo hago automatico
     const [rows, fields] = await sqlconnection.promise().query(production_query);
-    //console.log([rows])
+    
     const [mrows, mfields] = await sqlconnection.promise().query(machine_query);
+    // console.log(mrows)
 
     const xData = await rows.map(item => item.production_time);
     const yData = await rows.map(item => item.Production);
@@ -158,7 +149,8 @@ async function fetchData(value) {
       machineid: item.ID,
       machinestate: item.Estado,
       machineproduction: item.TotalProduction,
-      machineLE: item.LastError
+      machineIT: item.Inactive_Time,
+      machineLE: item.TS
     }));
   
     // console.log('Data fetched from MySQL:', xData, yData, machineStats);
@@ -399,7 +391,7 @@ app.post('/register-repair/:errorInstanceId', async (req, res) => {
   //res.send(`Successfully registered repair for error instance ID: ${errorInstanceId}`);
   res.redirect('/repair');
   } catch (error) {
-      console.error("Error occu                                     rred while registering repair:", error);
+      console.error("Error occurred while registering repair:", error);
       res.status(500).send("Internal Server Error");
   }
 });

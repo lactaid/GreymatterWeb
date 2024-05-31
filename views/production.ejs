@@ -58,16 +58,14 @@
 
                         function updateGlobalData(metrics) {
                             const variables = {
-                                availability: (1 - (metrics.Total_Inactive_Time / metrics.EWT)),
-                                performance: (metrics.Real_production / metrics.MPP),
-                                quality: (200 / metrics.Real_production),
-                                oee: ((1 - (metrics.Total_Inactive_Time / metrics.EWT)) * (metrics
-                                    .Real_production / metrics.MPP) * (0.9 / metrics.Real_production)),
-                                mttr: (metrics.Total_Inactive_Time / metrics.Number_of_errors),
-                                mtbf: ((metrics.EWT - metrics.Total_Inactive_Time) / metrics
-                                    .Number_of_errors),
-                                mtu: (metrics.MTU),
-                                n_errors: (metrics.Number_of_errors)
+                                availability: parseFloat((1 - (metrics.Total_Inactive_Time / metrics.EWT)).toFixed(4)),
+                                performance: parseFloat((metrics.Real_production / metrics.MPP).toFixed(4)),
+                                quality: parseFloat((10 / metrics.Real_production).toFixed(4)),
+                                oee: parseFloat(((1 - (metrics.Total_Inactive_Time / metrics.EWT)) * (metrics.Real_production / metrics.MPP) * (0.9 / metrics.Real_production)).toFixed(4)),
+                                mttr: convertSecondsToHMS((metrics.Total_Inactive_Time / metrics.Number_of_errors)),
+                                mtbf: convertSecondsToHMS(((metrics.EWT - metrics.Total_Inactive_Time) / metrics.Number_of_errors)),
+                                mtu: metrics.MTU,
+                                n_errors: metrics.Number_of_errors
                             };
 
                             console.log(variables);
@@ -95,8 +93,20 @@
                         <script>
                             var id;
 
+                            const convertSecondsToHMS = (seconds) => {
+                                const hours = Math.floor(seconds / 3600);
+                                const minutes = Math.floor((seconds % 3600) / 60);
+                                const remainingSeconds = seconds % 60;
+                                // Verificar si los valores son NaN y convertirlos a 0 si es necesario
+                                const safeHours = isNaN(hours) ? 0 : hours;
+                                const safeMinutes = isNaN(minutes) ? 0 : minutes;
+                                const safeRemainingSeconds = isNaN(remainingSeconds) ? 0 : remainingSeconds;
+
+                                return `${safeHours} hours, ${safeMinutes} minutes, ${safeRemainingSeconds} seconds`;
+                            };
+
                             // Function to update the ID card
-                            function updateData(id, state, production, productionTime) {
+                            function updateData(id, state, production, productionTime, inactive) {
                                 const idElement = document.getElementById('id');
                                 idElement.textContent = `ID: ${id}`;
                                 const stateElement = document.getElementById('state');
@@ -108,6 +118,9 @@
                                 const productionTimeElement = document.getElementById('productionTime');
                                 productionTimeElement.textContent =
                                     `Production Time: ${productionTime}`;
+                                const inactiveTimeElement = document.getElementById('inactive');
+                                inactiveTimeElement.textContent = 
+                                    `Inactive Time: ${inactive}`;
                             }
 
                             function updateMachineList(data) {
@@ -129,10 +142,11 @@
                                     let id = data[i].machineid;
                                     let state = data[i].machinestate;
                                     let production = data[i].machineproduction;
-                                    let productionTime = data[i].machineLE;
+                                    let productionTime = convertSecondsToHMS(data[i].machineLE);
+                                    let InactiveTime = convertSecondsToHMS(data[i].machineIT);
 
                                     if (currentSelection === id) {
-                                        updateData(id, state, production, productionTime);
+                                        updateData(id, state, production, productionTime, InactiveTime);
                                     }
                                     
                                     buttonElement.addEventListener('click', function (event) {
@@ -142,7 +156,7 @@
                                         
                                         toggleRowVisibility('last-row-global', false);
                                         toggleRowVisibility('last-row-machine', true);
-                                        updateData(id, state, production, productionTime);
+                                        updateData(id, state, production, productionTime, InactiveTime);
                                     });
                                     listGroupContainer.appendChild(buttonElement);
                                 };
@@ -258,6 +272,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="fs-6" id="productionTime">Time working since last error: </h5>
+                                <h5 class="fs-6" id="inactive">Inactive: </h5>
                                 <h5 class="fs-6" id="production">Production: </h5>
                             </div>
                         </div>

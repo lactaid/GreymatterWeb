@@ -144,7 +144,7 @@ def createConnection():
             conn = mysql.connector.connect(
                     host="localhost",
                     database="oeee_visual",
-                    user="root",
+                    user="",
                     password=""
             )
             return conn

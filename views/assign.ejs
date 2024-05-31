@@ -98,7 +98,7 @@
             selectedText = selectedText.replace(/[\d-]/g, '');
             
             //Esto es lo que manda el correo, si queremos que se mande solo hay que descomentarlo
-            /*(function(){
+            (function(){
                 emailjs.init("rCzXv1iJ74A3fvLfE"); //public key
             })();
 
@@ -115,7 +115,7 @@
             .then( res => {
                 alert("Email sent!")
             })
-            .catch();*/
+            .catch();
         }
     </script>
 
