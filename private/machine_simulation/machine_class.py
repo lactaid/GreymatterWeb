@@ -30,7 +30,7 @@ class Machine:
     def Work(self):
         bullet = random.randint(0,100)
         print('The bullet is: ', bullet)
-        if(bullet > 98):
+        if(bullet > 100):
             self.stop()
             self.fault_mode = random.sample(self.possible_errors, 1)[0]
             print("Production stopped at machine", self.ID, "!")

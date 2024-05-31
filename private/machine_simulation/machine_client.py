@@ -19,7 +19,7 @@ print("Conectado al servidor")
 
 # Creamos la máquina
 # ID, rate
-my_machine = Machine(1,3)
+my_machine = Machine(3,1)
 
 def Shift():
     global client_socket, pr
