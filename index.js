@@ -305,11 +305,10 @@ app.get('/assign/:errorInstanceId', async (req, res) => {
 app.post('/assign/:errorInstanceId', async (req, res) => {
   const errorInstanceId = req.params.errorInstanceId;
   const technicianId = req.body.technicianId;
-  const assignmentDetails = req.body.assignmentDetails;
 
   // Crear una nueva instancia en la tabla 'repair'
-  const sqlInsertRepair = 'INSERT INTO repair (ErrorInstance, technician, Comment, Asigned_time) VALUES (?, ?, ?, NOW())';
-  const values = [errorInstanceId, technicianId, assignmentDetails];
+  const sqlInsertRepair = 'INSERT INTO repair (ErrorInstance, technician, Asigned_time) VALUES (?, ?, NOW())';
+  const values = [errorInstanceId, technicianId];
 
   try {
       await sqlconnection.promise().query(sqlInsertRepair, values);
@@ -378,6 +377,10 @@ app.get('/register-repair/:errorInstanceId', async (req, res) => {
 app.post('/register-repair/:errorInstanceId', async (req, res) => {
   try {
       const errorInstanceId = req.params.errorInstanceId;
+      const comment = req.body.details;
+
+  const UpdateRepair = 'UPDATE oeee_visual.repair SET Comment = ? WHERE ErrorInstance = ?';
+  await sqlconnection.promise().query(UpdateRepair, [comment, errorInstanceId]);
       
   // Update the Finished_time column with the current timestamp
   const updateErrorInstanceQuery = 'UPDATE error_instance SET Finished_time = NOW() WHERE ID_ErrorInstance = ?';
@@ -396,6 +399,38 @@ app.post('/register-repair/:errorInstanceId', async (req, res) => {
   }
 });
 
+app.get('/repair_history', async (req, res) => {
+  try {
+      const rows = []
+      res.render('history', {results: rows});
+    } catch (error) {
+      console.error("Error occurred while registering repair:", error);
+      res.status(500).send("Internal Server Error");
+  }
+});
+
+app.post('/repair_history', async (req, res) => {
+  try {
+    const campo1 = req.body.campo1;
+    const campo2 = req.body.campo2;
+    const campo3 = req.body.campo3;
+
+    const history_query = `SELECT ErrorInstance, Finished_time, Faultmode, name, lastname, comment
+      FROM oeee_visual.error_instance
+      INNER JOIN oeee_visual.repair ON ErrorInstance = ID_ErrorInstance
+      INNER JOIN oeee_visual.error ON idError = ID_Error
+      INNER JOIN oeee_visual.technician ON idtechnician = technician
+      WHERE Asigned_time BETWEEN ? AND ?
+      AND Comment is not NULL;`;
+
+    const [rows] = await sqlconnection.promise().query(history_query, [campo2, campo3]);
+
+    res.render('history', { results: rows });
+  } catch (error) {
+    console.error("Error occurred:", error);
+    res.status(500).send("Internal Server Error");
+  }
+})
 
 var ips = os.networkInterfaces();
 
