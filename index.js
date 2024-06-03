@@ -194,8 +194,10 @@ async function fetchMetrics() {
 // Define your MySQL connection
 const sqlconnection = mysql.createConnection({
   host: 'localhost',
-  user: process.env.SQL_USER, // Variables de entorno, definir en archivo .env, si no existe se debe crear en tu compu
-  password: process.env.SQL_PASSWORD,
+  /*user: process.env.SQL_USER, // Variables de entorno, definir en archivo .env, si no existe se debe crear en tu compu
+  password: process.env.SQL_PASSWORD,*/
+  user: 'root',
+  password: 'eckowizard',
   database: 'oeee_visual'
 });
 // Connect to MySQL
